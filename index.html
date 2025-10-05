@@ -1,12 +1,15 @@
-html
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delta Project Tracker</title>
+    <title>Delta LC Projects</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --primary: #2c3e50;
@@ -16,6 +19,7 @@ html
             --dark: #34495e;
             --success: #2ecc71;
             --warning: #f39c12;
+            --info: #1abc9c;
         }
         
         * {
@@ -32,7 +36,7 @@ html
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 0 20px;
         }
@@ -126,6 +130,7 @@ html
         .location { background-color: var(--secondary); }
         .manhour { background-color: var(--success); }
         .projects { background-color: var(--warning); }
+        .budget { background-color: var(--info); }
         
         .stat-info h3 {
             font-size: 1.8rem;
@@ -143,14 +148,14 @@ html
             gap: 30px;
         }
         
-        .form-section, .data-section {
+        .form-section, .data-section, .admin-section, .calendar-section, .report-section {
             background: white;
             border-radius: 8px;
             padding: 1.5rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         
-        .form-section h3, .data-section h3 {
+        .form-section h3, .data-section h3, .admin-section h3, .calendar-section h3, .report-section h3 {
             margin-bottom: 1.5rem;
             color: var(--primary);
             display: flex;
@@ -209,6 +214,22 @@ html
             background-color: #c0392b;
         }
         
+        .btn-admin {
+            background-color: var(--warning);
+        }
+        
+        .btn-admin:hover {
+            background-color: #e67e22;
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
         table {
             width: 100%;
             border-collapse: collapse;
@@ -247,6 +268,164 @@ html
             color: var(--accent);
         }
         
+        /* Admin Login Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-header h3 {
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #777;
+        }
+        
+        .admin-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .user-list {
+            margin-top: 1.5rem;
+        }
+        
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .user-item:last-child {
+            border-bottom: none;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .admin-badge {
+            background-color: var(--warning);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+        
+        /* Calendar Styles */
+        .calendar {
+            margin-top: 1.5rem;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        
+        .calendar-day {
+            background-color: var(--light);
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .calendar-date {
+            border: 1px solid #eee;
+            min-height: 100px;
+            padding: 5px;
+            position: relative;
+        }
+        
+        .calendar-date.today {
+            background-color: #e1f5fe;
+        }
+        
+        .calendar-date.has-event {
+            background-color: #e8f5e9;
+        }
+        
+        .calendar-event {
+            background-color: var(--secondary);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+        
+        /* Report Section */
+        .report-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .chart-container {
+            margin-top: 1.5rem;
+            height: 300px;
+        }
+        
         footer {
             background-color: var(--primary);
             color: white;
@@ -269,6 +448,10 @@ html
                 flex-wrap: wrap;
                 justify-content: center;
             }
+            
+            .admin-controls, .report-controls {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -277,15 +460,15 @@ html
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <i class="fas fa-map-marked-alt"></i>
-                    <h1>Delta Project Tracker</h1>
+                    <i class="fas fa-project-diagram"></i>
+                    <h1>Delta LC Projects</h1>
                 </div>
                 <nav>
                     <ul>
-                        <li><a href="#" class="active">Dashboard</a></li>
-                        <li><a href="#">Projects</a></li>
-                        <li><a href="#">Reports</a></li>
-                        <li><a href="#">Settings</a></li>
+                        <li><a href="#" class="active" data-tab="dashboard">Dashboard</a></li>
+                        <li><a href="#" data-tab="calendar">Calendar</a></li>
+                        <li><a href="#" data-tab="reports">Reports</a></li>
+                        <li><a href="#" id="adminLink">Admin</a></li>
                     </ul>
                 </nav>
             </div>
@@ -293,7 +476,8 @@ html
     </header>
     
     <main class="container">
-        <section class="dashboard">
+        <!-- Dashboard Tab -->
+        <section class="dashboard" id="dashboardTab">
             <h2>Project Dashboard</h2>
             
             <div class="stats">
@@ -302,7 +486,7 @@ html
                         <i class="fas fa-location-dot"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>5</h3>
+                        <h3 id="activeSitesCount">5</h3>
                         <p>Active Sites</p>
                     </div>
                 </div>
@@ -312,7 +496,7 @@ html
                         <i class="fas fa-clock"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>248</h3>
+                        <h3 id="totalManhours">248</h3>
                         <p>Total Manhours</p>
                     </div>
                 </div>
@@ -322,19 +506,42 @@ html
                         <i class="fas fa-list-check"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>12</h3>
+                        <h3 id="completedProjects">12</h3>
                         <p>Projects Completed</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon budget">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>$245K</h3>
+                        <p>Budget Utilization</p>
                     </div>
                 </div>
             </div>
             
             <div class="content">
                 <div class="form-section">
-                    <h3><i class="fas fa-plus-circle"></i> Add New Entry</h3>
+                    <h3><i class="fas fa-plus-circle"></i> Add New Project</h3>
                     <form id="projectForm">
                         <div class="form-group">
                             <label for="siteLocation">Site Location</label>
-                            <input type="text" id="siteLocation" value="SV-12" required>
+                            <select id="siteLocation" required>
+                                <option value="Equinix-SV12">Equinix-SV12</option>
+                                <option value="Digital Crossroads">Digital Crossroads</option>
+                                <option value="Equinix-DC16">Equinix-DC16</option>
+                                <option value="Equinix-NY11">Equinix-NY11</option>
+                                <option value="Equinix-NY3">Equinix-NY3</option>
+                                <option value="Equinix-NY4">Equinix-NY4</option>
+                                <option value="Equinix-SE4">Equinix-SE4</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="siteAddress">Site Address</label>
+                            <textarea id="siteAddress" placeholder="Enter full address for GPS location" required></textarea>
                         </div>
                         
                         <div class="form-group">
@@ -362,7 +569,7 @@ html
                         </div>
                         
                         <button type="submit" class="btn">
-                            <i class="fas fa-save"></i> Save Entry
+                            <i class="fas fa-save"></i> Save Project
                         </button>
                     </form>
                 </div>
@@ -373,6 +580,7 @@ html
                         <thead>
                             <tr>
                                 <th>Site Location</th>
+                                <th>Address</th>
                                 <th>Man Hours</th>
                                 <th>Date</th>
                                 <th>Status</th>
@@ -380,46 +588,129 @@ html
                             </tr>
                         </thead>
                         <tbody id="projectTable">
-                            <tr>
-                                <td>SV-12</td>
-                                <td>40</td>
-                                <td>2023-10-15</td>
-                                <td><span class="status-badge active">Active</span></td>
-                                <td class="actions">
-                                    <button class="action-btn edit"><i class="fas fa-edit"></i></button>
-                                    <button class="action-btn delete"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>SV-12</td>
-                                <td>32.5</td>
-                                <td>2023-10-18</td>
-                                <td><span class="status-badge active">Active</span></td>
-                                <td class="actions">
-                                    <button class="action-btn edit"><i class="fas fa-edit"></i></button>
-                                    <button class="action-btn delete"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>SV-15</td>
-                                <td>56</td>
-                                <td>2023-10-20</td>
-                                <td><span class="status-badge completed">Completed</span></td>
-                                <td class="actions">
-                                    <button class="action-btn edit"><i class="fas fa-edit"></i></button>
-                                    <button class="action-btn delete"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
+                            <!-- Projects will be populated here -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+            
+            <!-- Admin Section (Initially Hidden) -->
+            <div class="admin-section" id="adminSection" style="display: none; margin-top: 2rem;">
+                <h3><i class="fas fa-user-shield"></i> User Management</h3>
+                <div class="admin-controls">
+                    <button class="btn btn-admin" id="addUserBtn">
+                        <i class="fas fa-user-plus"></i> Add User
+                    </button>
+                    <button class="btn btn-success" id="generateReportBtn">
+                        <i class="fas fa-chart-bar"></i> Generate Report
+                    </button>
+                    <button class="btn btn-danger" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+                
+                <div class="user-list" id="userList">
+                    <!-- Users will be added here dynamically -->
+                </div>
+            </div>
+        </section>
+        
+        <!-- Calendar Tab -->
+        <section class="dashboard" id="calendarTab" style="display: none;">
+            <h2>Project Calendar</h2>
+            <div class="calendar-section">
+                <h3><i class="fas fa-calendar-alt"></i> Project Timeline</h3>
+                <div class="calendar-header">
+                    <button class="btn" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+                    <h3 id="currentMonth">October 2023</h3>
+                    <button class="btn" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="calendar">
+                    <div class="calendar-grid" id="calendarDays">
+                        <!-- Calendar days will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Reports Tab -->
+        <section class="dashboard" id="reportsTab" style="display: none;">
+            <h2>Project Reports</h2>
+            <div class="report-section">
+                <h3><i class="fas fa-chart-line"></i> Project Analytics</h3>
+                <div class="report-controls">
+                    <select id="reportType" class="form-group">
+                        <option value="weekly">Weekly Report</option>
+                        <option value="monthly">Monthly Report</option>
+                        <option value="yearly">Yearly Report</option>
+                    </select>
+                    <button class="btn btn-success" id="generatePdf">
+                        <i class="fas fa-file-pdf"></i> Download PDF
+                    </button>
+                    <button class="btn" id="printReport">
+                        <i class="fas fa-print"></i> Print Report
+                    </button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="reportChart"></canvas>
                 </div>
             </div>
         </section>
     </main>
     
+    <!-- Admin Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-lock"></i> Administrator Login</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="adminPassword">Password</label>
+                <input type="password" id="adminPassword" placeholder="Enter admin password">
+            </div>
+            <button class="btn" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+            <p style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
+                Hint: The password is "delta2023"
+            </p>
+        </div>
+    </div>
+    
+    <!-- Add User Modal -->
+    <div class="modal" id="addUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Add New User</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="addUserForm">
+                <div class="form-group">
+                    <label for="userName">Full Name</label>
+                    <input type="text" id="userName" placeholder="Enter user's full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">Email</label>
+                    <input type="email" id="userEmail" placeholder="Enter user's email" required>
+                </div>
+                <div class="form-group">
+                    <label for="userRole">Role</label>
+                    <select id="userRole" required>
+                        <option value="user">User</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">
+                    <i class="fas fa-save"></i> Add User
+                </button>
+            </form>
+        </div>
+    </div>
+    
     <footer>
         <div class="container">
-            <p>&copy; 2023 Delta Project Tracker. All rights reserved.</p>
+            <p>&copy; 2023 Delta LC Projects. All rights reserved.</p>
         </div>
     </footer>
 
@@ -427,83 +718,547 @@ html
         // Set today's date as default
         document.getElementById('date').valueAsDate = new Date();
         
-        // Form submission handler
-        document.getElementById('projectForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const siteLocation = document.getElementById('siteLocation').value;
-            const manHours = document.getElementById('manHours').value;
-            const date = document.getElementById('date').value;
-            const projectNotes = document.getElementById('projectNotes').value;
-            const status = document.getElementById('status').value;
-            
-            // Create new table row
-            const table = document.getElementById('projectTable');
-            const newRow = document.createElement('tr');
-            
-            // Format date for display
-            const displayDate = new Date(date).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
-            
-            newRow.innerHTML = `
-                <td>${siteLocation}</td>
-                <td>${manHours}</td>
-                <td>${displayDate}</td>
-                <td><span class="status-badge ${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
-                <td class="actions">
-                    <button class="action-btn edit"><i class="fas fa-edit"></i></button>
-                    <button class="action-btn delete"><i class="fas fa-trash"></i></button>
-                </td>
-            `;
-            
-            // Add to top of table
-            table.insertBefore(newRow, table.firstChild);
-            
-            // Update stats
-            updateStats();
-            
-            // Reset form
-            this.reset();
-            document.getElementById('siteLocation').value = 'SV-12';
-            document.getElementById('date').valueAsDate = new Date();
-            
-            // Show success message (in a real app, this would be more sophisticated)
-            alert('Project entry added successfully!');
+        // Site location addresses mapping
+        const siteAddresses = {
+            "Equinix-SV12": "11 Great Oaks Blvd, San Jose, CA 95119, United States",
+            "Digital Crossroads": "250 N Illinois St, Indianapolis, IN 46204, United States",
+            "Equinix-DC16": "21715 Filigree Ct, Ashburn, VA 20147, United States",
+            "Equinix-NY11": "755 Secaucus Rd, Secaucus, NJ 07094, United States",
+            "Equinix-NY3": "800 Secaucus Rd, Secaucus, NJ 07094, United States",
+            "Equinix-NY4": "1 Teleport Dr, Staten Island, NY 10311, United States",
+            "Equinix-SE4": "2601 Elliott Ave, Seattle, WA 98121, United States"
+        };
+        
+        // Set default address based on selected site
+        document.getElementById('siteLocation').addEventListener('change', function() {
+            const selectedSite = this.value;
+            document.getElementById('siteAddress').value = siteAddresses[selectedSite] || '';
         });
         
-        // Delete button handlers
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('fa-trash') || e.target.classList.contains('delete')) {
-                const row = e.target.closest('tr');
-                if (confirm('Are you sure you want to delete this entry?')) {
-                    row.remove();
-                    updateStats();
-                }
+        // Set default address on page load
+        document.getElementById('siteAddress').value = siteAddresses["Equinix-SV12"];
+        
+        // Sample project data with GPS addresses
+        let projects = [
+            {
+                id: 1,
+                siteLocation: "Equinix-SV12",
+                siteAddress: siteAddresses["Equinix-SV12"],
+                manHours: 40,
+                date: "2023-10-15",
+                status: "active",
+                notes: "Initial site setup and foundation work"
+            },
+            {
+                id: 2,
+                siteLocation: "Equinix-SV12",
+                siteAddress: siteAddresses["Equinix-SV12"],
+                manHours: 32.5,
+                date: "2023-10-18",
+                status: "active",
+                notes: "Structural framing and electrical rough-in"
+            },
+            {
+                id: 3,
+                siteLocation: "Digital Crossroads",
+                siteAddress: siteAddresses["Digital Crossroads"],
+                manHours: 56,
+                date: "2023-10-20",
+                status: "completed",
+                notes: "Final inspection and project handover"
+            },
+            {
+                id: 4,
+                siteLocation: "Equinix-DC16",
+                siteAddress: siteAddresses["Equinix-DC16"],
+                manHours: 24,
+                date: "2023-10-22",
+                status: "on-hold",
+                notes: "Awaiting permit approval"
             }
-        });
+        ];
+        
+        // Admin state
+        let isAdmin = false;
+        let users = [
+            { id: 1, name: "John Smith", email: "john@deltalc.com", role: "admin", avatar: "JS" },
+            { id: 2, name: "Sarah Johnson", email: "sarah@deltalc.com", role: "user", avatar: "SJ" },
+            { id: 3, name: "Mike Williams", email: "mike@deltalc.com", role: "user", avatar: "MW" }
+        ];
+        
+        // Calendar state
+        let currentDate = new Date();
+        
+        // DOM Elements
+        const loginModal = document.getElementById('loginModal');
+        const addUserModal = document.getElementById('addUserModal');
+        const adminSection = document.getElementById('adminSection');
+        const adminLink = document.getElementById('adminLink');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const addUserBtn = document.getElementById('addUserBtn');
+        const generateReportBtn = document.getElementById('generateReportBtn');
+        const generatePdfBtn = document.getElementById('generatePdf');
+        const printReportBtn = document.getElementById('printReport');
+        const closeModalButtons = document.querySelectorAll('.close-modal');
+        const userList = document.getElementById('userList');
+        const projectTable = document.getElementById('projectTable');
+        const tabLinks = document.querySelectorAll('nav a[data-tab]');
+        const tabSections = document.querySelectorAll('.dashboard');
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const currentMonthEl = document.getElementById('currentMonth');
+        const calendarDays = document.getElementById('calendarDays');
+        const reportType = document.getElementById('reportType');
+        
+        // Initialize the application
+        function init() {
+            renderProjectTable();
+            updateStats();
+            renderCalendar();
+            setupEventListeners();
+            setupChart();
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Tab navigation
+            tabLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show selected tab
+                    tabSections.forEach(section => {
+                        section.style.display = 'none';
+                    });
+                    document.getElementById(`${tabId}Tab`).style.display = 'block';
+                });
+            });
+            
+            // Admin functionality
+            adminLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!isAdmin) {
+                    loginModal.style.display = 'flex';
+                } else {
+                    adminSection.style.display = 'block';
+                }
+            });
+            
+            loginBtn.addEventListener('click', function() {
+                const password = document.getElementById('adminPassword').value;
+                if (password === 'delta2023') {
+                    isAdmin = true;
+                    loginModal.style.display = 'none';
+                    adminSection.style.display = 'block';
+                    renderUserList();
+                    document.getElementById('adminPassword').value = '';
+                } else {
+                    alert('Incorrect password. Please try again.');
+                }
+            });
+            
+            logoutBtn.addEventListener('click', function() {
+                isAdmin = false;
+                adminSection.style.display = 'none';
+            });
+            
+            addUserBtn.addEventListener('click', function() {
+                addUserModal.style.display = 'flex';
+            });
+            
+            generateReportBtn.addEventListener('click', function() {
+                document.querySelector('nav a[data-tab="reports"]').click();
+            });
+            
+            // Close modals
+            closeModalButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    loginModal.style.display = 'none';
+                    addUserModal.style.display = 'none';
+                });
+            });
+            
+            // Close modals when clicking outside
+            window.addEventListener('click', function(e) {
+                if (e.target === loginModal) {
+                    loginModal.style.display = 'none';
+                }
+                if (e.target === addUserModal) {
+                    addUserModal.style.display = 'none';
+                }
+            });
+            
+            // Add User Form Submission
+            document.getElementById('addUserForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('userName').value;
+                const email = document.getElementById('userEmail').value;
+                const role = document.getElementById('userRole').value;
+                
+                // Generate avatar initials
+                const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase();
+                
+                // Create new user
+                const newUser = {
+                    id: users.length + 1,
+                    name,
+                    email,
+                    role,
+                    avatar
+                };
+                
+                users.push(newUser);
+                renderUserList();
+                
+                // Reset form and close modal
+                this.reset();
+                addUserModal.style.display = 'none';
+                
+                alert('User added successfully!');
+            });
+            
+            // Project Form Submission
+            document.getElementById('projectForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const siteLocation = document.getElementById('siteLocation').value;
+                const siteAddress = document.getElementById('siteAddress').value;
+                const manHours = document.getElementById('manHours').value;
+                const date = document.getElementById('date').value;
+                const projectNotes = document.getElementById('projectNotes').value;
+                const status = document.getElementById('status').value;
+                
+                // Create new project
+                const newProject = {
+                    id: projects.length + 1,
+                    siteLocation,
+                    siteAddress,
+                    manHours: parseFloat(manHours),
+                    date,
+                    status,
+                    notes: projectNotes
+                };
+                
+                projects.push(newProject);
+                renderProjectTable();
+                updateStats();
+                renderCalendar();
+                
+                // Reset form
+                this.reset();
+                document.getElementById('siteLocation').value = 'Equinix-SV12';
+                document.getElementById('siteAddress').value = siteAddresses["Equinix-SV12"];
+                document.getElementById('date').valueAsDate = new Date();
+                
+                alert('Project added successfully!');
+            });
+            
+            // Calendar navigation
+            prevMonthBtn.addEventListener('click', function() {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                renderCalendar();
+            });
+            
+            nextMonthBtn.addEventListener('click', function() {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                renderCalendar();
+            });
+            
+            // Report generation
+            generatePdfBtn.addEventListener('click', generatePdfReport);
+            printReportBtn.addEventListener('click', printReport);
+            reportType.addEventListener('change', updateReportChart);
+        }
+        
+        // Render project table
+        function renderProjectTable() {
+            projectTable.innerHTML = '';
+            
+            projects.forEach(project => {
+                const row = document.createElement('tr');
+                
+                // Format date for display
+                const displayDate = new Date(project.date).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                row.innerHTML = `
+                    <td>${project.siteLocation}</td>
+                    <td>${project.siteAddress}</td>
+                    <td>${project.manHours}</td>
+                    <td>${displayDate}</td>
+                    <td><span class="status-badge ${project.status}">${project.status.charAt(0).toUpperCase() + project.status.slice(1)}</span></td>
+                    <td class="actions">
+                        <button class="action-btn edit" data-id="${project.id}"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn delete delete-project" data-id="${project.id}"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                
+                projectTable.appendChild(row);
+            });
+            
+            // Add event listeners for project actions
+            document.querySelectorAll('.delete-project').forEach(button => {
+                button.addEventListener('click', function() {
+                    const projectId = parseInt(this.getAttribute('data-id'));
+                    if (confirm('Are you sure you want to delete this project?')) {
+                        projects = projects.filter(project => project.id !== projectId);
+                        renderProjectTable();
+                        updateStats();
+                        renderCalendar();
+                    }
+                });
+            });
+        }
         
         // Update dashboard stats
         function updateStats() {
-            const rows = document.querySelectorAll('#projectTable tr');
+            const activeSites = new Set();
             let totalManhours = 0;
-            let activeSites = new Set();
+            let completedProjects = 0;
             
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                totalManhours += parseFloat(cells[1].textContent);
-                activeSites.add(cells[0].textContent);
+            projects.forEach(project => {
+                activeSites.add(project.siteLocation);
+                totalManhours += project.manHours;
+                if (project.status === 'completed') {
+                    completedProjects++;
+                }
             });
             
-            // Update the stats display
-            document.querySelector('.stats .stat-card:nth-child(2) h3').textContent = totalManhours;
-            document.querySelector('.stats .stat-card:nth-child(1) h3').textContent = activeSites.size;
+            document.getElementById('activeSitesCount').textContent = activeSites.size;
+            document.getElementById('totalManhours').textContent = totalManhours;
+            document.getElementById('completedProjects').textContent = completedProjects;
         }
         
-        // Initialize stats
-        updateStats();
+        // Render user list
+        function renderUserList() {
+            userList.innerHTML = '';
+            
+            users.forEach(user => {
+                const userItem = document.createElement('div');
+                userItem.className = 'user-item';
+                
+                userItem.innerHTML = `
+                    <div class="user-info">
+                        <div class="user-avatar">${user.avatar}</div>
+                        <div>
+                            <div>${user.name}</div>
+                            <div style="font-size: 0.8rem; color: #666;">${user.email}</div>
+                        </div>
+                        ${user.role === 'admin' ? '<span class="admin-badge">Admin</span>' : ''}
+                    </div>
+                    <div class="actions">
+                        <button class="action-btn edit-user" data-id="${user.id}"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn delete-user delete" data-id="${user.id}"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                
+                userList.appendChild(userItem);
+            });
+            
+            // Add event listeners for user actions
+            document.querySelectorAll('.delete-user').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = parseInt(this.getAttribute('data-id'));
+                    if (confirm('Are you sure you want to delete this user?')) {
+                        users = users.filter(user => user.id !== userId);
+                        renderUserList();
+                    }
+                });
+            });
+        }
+        
+        // Render calendar
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            // Update month display
+            currentMonthEl.textContent = currentDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long'
+            });
+            
+            // Get first day of month and number of days
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            
+            // Clear calendar
+            calendarDays.innerHTML = '';
+            
+            // Add day headers
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            days.forEach(day => {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+                dayEl.textContent = day;
+                calendarDays.appendChild(dayEl);
+            });
+            
+            // Add empty cells for days before the first day of the month
+            for (let i = 0; i < firstDay.getDay(); i++) {
+                const emptyEl = document.createElement('div');
+                emptyEl.className = 'calendar-date';
+                calendarDays.appendChild(emptyEl);
+            }
+            
+            // Add days of the month
+            const today = new Date();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateEl = document.createElement('div');
+                dateEl.className = 'calendar-date';
+                
+                // Check if this is today
+                if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
+                    dateEl.classList.add('today');
+                }
+                
+                // Add date number
+                const dateNumber = document.createElement('div');
+                dateNumber.textContent = day;
+                dateEl.appendChild(dateNumber);
+                
+                // Check for projects on this date
+                const currentDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayProjects = projects.filter(project => project.date === currentDateStr);
+                
+                if (dayProjects.length > 0) {
+                    dateEl.classList.add('has-event');
+                    
+                    // Add project events
+                    dayProjects.forEach(project => {
+                        const eventEl = document.createElement('div');
+                        eventEl.className = 'calendar-event';
+                        eventEl.textContent = `${project.siteLocation} - ${project.status}`;
+                        eventEl.title = `${project.siteLocation}: ${project.notes}`;
+                        dateEl.appendChild(eventEl);
+                    });
+                }
+                
+                calendarDays.appendChild(dateEl);
+            }
+        }
+        
+        // Setup chart for reports
+        function setupChart() {
+            const ctx = document.getElementById('reportChart').getContext('2d');
+            window.reportChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Man Hours',
+                        data: [120, 190, 150, 220, 180, 250, 300, 280, 320, 248, 190, 210],
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Man Hours'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Months'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update report chart based on selected report type
+        function updateReportChart() {
+            const reportTypeValue = reportType.value;
+            
+            if (reportTypeValue === 'weekly') {
+                window.reportChart.data.labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+                window.reportChart.data.datasets[0].data = [65, 78, 90, 81];
+                window.reportChart.options.scales.x.title.text = 'Weeks';
+            } else if (reportTypeValue === 'monthly') {
+                window.reportChart.data.labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                window.reportChart.data.datasets[0].data = [120, 190, 150, 220, 180, 250, 300, 280, 320, 248, 190, 210];
+                window.reportChart.options.scales.x.title.text = 'Months';
+            } else if (reportTypeValue === 'yearly') {
+                window.reportChart.data.labels = ['2020', '2021', '2022', '2023'];
+                window.reportChart.data.datasets[0].data = [1800, 2200, 2800, 2480];
+                window.reportChart.options.scales.x.title.text = 'Years';
+            }
+            
+            window.reportChart.update();
+        }
+        
+        // Generate PDF report
+        function generatePdfReport() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Add title
+            doc.setFontSize(20);
+            doc.text('Delta LC Projects Report', 20, 20);
+            
+            // Add date
+            doc.setFontSize(12);
+            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 30);
+            
+            // Add report type
+            doc.text(`Report Type: ${reportType.options[reportType.selectedIndex].text}`, 20, 40);
+            
+            // Add stats
+            doc.text(`Active Sites: ${document.getElementById('activeSitesCount').textContent}`, 20, 60);
+            doc.text(`Total Manhours: ${document.getElementById('totalManhours').textContent}`, 20, 70);
+            doc.text(`Completed Projects: ${document.getElementById('completedProjects').textContent}`, 20, 80);
+            
+            // Add project list
+            doc.text('Recent Projects:', 20, 100);
+            let yPos = 110;
+            projects.slice(0, 5).forEach(project => {
+                if (yPos > 270) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                doc.text(`${project.siteLocation} - ${project.date} - ${project.manHours} hrs`, 20, yPos);
+                yPos += 10;
+            });
+            
+            // Save the PDF
+            doc.save(`Delta_LC_Projects_${reportType.value}_Report.pdf`);
+        }
+        
+        // Print report
+        function printReport() {
+            const printContent = document.getElementById('reportsTab').innerHTML;
+            const originalContent = document.body.innerHTML;
+            
+            document.body.innerHTML = printContent;
+            window.print();
+            document.body.innerHTML = originalContent;
+            
+            // Reinitialize the application
+            init();
+        }
+        
+        // Initialize the application
+        init();
         
         // Add some CSS for status badges
         const style = document.createElement('style');
